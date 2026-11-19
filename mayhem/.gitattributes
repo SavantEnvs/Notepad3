@@ -1,0 +1,3 @@
+# Keep the Mayhem layer byte-exact on checkout (upstream .gitattributes forces CRLF on *.sh,
+# *.c, ... which would break bash scripts and alter seed bytes).
+* -text

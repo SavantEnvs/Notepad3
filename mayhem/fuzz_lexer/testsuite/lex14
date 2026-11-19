@@ -1,0 +1,87 @@
+function [B,U,W] = ThinICA( x, p, Delays, Splits, Choice, ...
+                                  Projection, N, Stop, MaxIter, A)
+%------------Thin Algorithm for Independent Component Analysis---------- 
+%-----------------------------------------------------------------------
+%
+% 	Copyright: Sergio Cruces, Andrzej Cichocki.
+% 	           
+% 	    Version: 2.0                         Last update: 20/02/2004.
+%
+%-----------------------------------------------------------------------
+%
+% Related Bibliography:
+%
+% [1] S. Cruces, A. Cichocki, L. De Lathauwer, "Thin QR and SVD factori-
+%     zations for simultaneous blind signal extraction", Proc. EUSIPCO 
+%     (submitted), 2004.
+% [2] S. Cruces, A. Cichocki, "Combining blind source extraction and 
+%     joint approximate diagonalization", Proc. fourth symp. on ICA/BSS,
+%     pp. 463--468, Japan, 2003.
+% [3] L. De Lathauwer, B. De-Moor, J. Vandewalle, "On the best rank-1 
+%     and rank-(R_1,...,R_N) approximation of higher-order tensors", 
+%     SIAM J. Matrix Anal. Appl., vol. 21(4), pp. 1324-1342, 2000.
+% [4] A. Hyvarinen, E. Oja, "Fixed point algorithm for independent com-
+%     ponent analysis", Neural Computation, vol. 9, pp. 1482-1492, 1997.
+%
+%  Extracts 'p' of the latent independent components of the observations
+%  by using as criterion the low-rank approximation to a set of cumulant 
+%  tensors. This version works for complex signals.
+%
+%  Two optimizations for the criterion are possible:
+%
+%  Thin-SVD: performs a simultaneous optimization w.r.t. of all the 
+%            columns of U, and guarantees the monotonous ascent.
+%
+%  Thin-QR:  performs a hierarchical optimiz. w.r.t. the columns of U.
+%            Guarantees the ascent of the first non-convergent mode.
+%
+%-----------------------------------------------------------------------
+%
+% [B,U,W]=ThinICA(x,p,Delays,Splits,Choice,Projection,N,Stop,MaxIter,A);
+% 
+% OUTPUT ARGUMENTS
+%
+%  B 		  Extraction matrix (B=U'*W)
+%  U          Semiunitary ICA transformation.
+%  W  		  Prewhitening transformation.
+%
+% INPUT ARGUMENTS  (only 'x' is mandatory)
+%
+%  x          Matrix of observations, size(x)=[No.Sensors,No.Samples].
+%  p          Number of independent componentes to extract.
+%  Delays     = [d1,d2,d3] 3x1-vector of non-negative elements denoting
+%             the no. of time tuples for each statistic in the contrast.
+%               Second order statistics: (t,t),(t,t-1)...,(t,t-d1+1) 
+%               Third order statistics:  
+%               (t,t,t),(t,t-1,t-1),...,(t,t-d2+1,t-d2+1) 
+%               Fourth order statistics: 
+%               (t,t,t,t),(t,t-1,t-1,t-1),...,(t,t-d3+1,t-d3+1,t-d3+1) 
+%  Splits     No. of splits of the observations 'x'. Only relevant 
+%             for nonstationary signals.
+%  Choice     Selects the type of optimization:
+%                 1.  TSVD-ICA (simultaneous). [default]          
+%                 0.  TQR-ICA  (hierarchical).
+%  Projection onto the supersymmetric manifold which contains the 
+%             solutions (only recommended under special conditions).
+%  N          Total no. of latent independent components in 'x'.
+%  Stop       Sensivity parameter to stop the convergence (around 1E-4).
+%  MaxIter    Maximum no. of iterations allowed.
+%  A          Mixing system (if defined activates the debug mode).
+%
+%-----------------------------------------------------------------------
+%
+%  Examples:   B = ThinICA(x);  
+%              B = ThinICA(x,p, Delays);   
+%              B = ThinICA(x,p, Delays, Splits, Choice, Projection);
+%              B = ThinICA(x,p,[10 1 1],  0   ,   1   , 0         );
+%
+%
+[M,T]=size(x);
+if ~exist('p','var'),           p           =1;             end;
+if ~exist('Delays','var'),      Delays      =[1 1 1];       end;
+if ~exist('Splits','var'),      Splits      =0;             end;
+if ~exist('Choice','var'),      Choice      =1;             end;
+if ~exist('Projection','var'),  Projection  =0;             end;
+if ~exist('N','var'),           N           =M;             end;
+if ~exist('Stop','var'),        Stop        =1e-4;          end;
+if ~exist('MaxIter','

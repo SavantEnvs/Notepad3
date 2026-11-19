@@ -1,0 +1,147 @@
+-- Simple Microprocessor Design (ESD Book Chapter 3)
+-- Copyright 2001 Weijun Zhang
+--
+-- DATAPATH composed of Multiplexor, Register File and ALU
+-- VHDL structural modeling
+-- datapath.vhd
+----------------------------------------------------------------
+
+library	ieee;
+use ieee.std_logic_1164.all;  
+use ieee.std_logic_arith.all;			   
+use ieee.std_logic_unsigned.all;
+
+entity datapath is				
+port(	clock_dp:	in 	std_logic;
+	rst_dp:		in 	std_logic;
+	imm_data:	in 	std_logic_vector(15 downto 0);
+	mem_data: 	in 	std_logic_vector(15 downto 0);
+	RFs_dp:		in 	std_logic_vector(1 downto 0);
+	RFwa_dp:	in 	std_logic_vector(3 downto 0);
+	RFr1a_dp:	in 	std_logic_vector(3 downto 0);
+	RFr2a_dp:	in 	std_logic_vector(3 downto 0);
+	RFwe_dp:	in 	std_logic;
+	RFr1e_dp:	in 	std_logic;
+	RFr2e_dp:	in 	std_logic;
+	jp_en:		in 	std_logic;
+	ALUs_dp:	in 	std_logic_vector(1 downto 0);
+	oe_dp:		in 	std_logic;
+	ALUz_dp:	out 	std_logic;
+	RF1out_dp:	out 	std_logic_vector(15 downto 0);
+	ALUout_dp:	out 	std_logic_vector(15 downto 0);
+	bufout_dp:	out 	std_logic_vector(15 downto 0)
+);
+end datapath;
+
+architecture struct of datapath is
+
+component smallmux is
+port( 	I0: 	in std_logic_vector(15 downto 0);
+	I1: 	in std_logic_vector(15 downto 0);	  
+	I2:	in std_logic_vector(15 downto 0);
+	Sel:	in std_logic_vector(1 downto 0);
+	O: 	out std_logic_vector(15 downto 0)
+);
+end component;
+
+component reg_file is
+port ( 	clock	: 	in std_logic;
+	rst	: 	in std_logic;
+	RFwe	: 	in std_logic;
+	RFr1e	: 	in std_logic;
+	RFr2e	: 	in std_logic;
+	RFwa	: 	in std_logic_vector(3 downto 0);
+	RFr1a	: 	in std_logic_vector(3 downto 0);
+	RFr2a	: 	in std_logic_vector(3 downto 0);
+	RFw	: 	in std_logic_vector(15 downto 0);
+	RFr1	: 	out std_logic_vector(15 downto 0);
+	RFr2	:	out std_logic_vector(15 downto 0)
+);
+end component;
+
+component alu is
+port (	num_A: 	in std_logic_vector(15 downto 0);
+	num_B: 	in std_logic_vector(15 downto 0);
+	jpsign:	in std_logic;
+	ALUs:	in std_logic_vector(1 downto 0);
+	ALUz:	out std_logic;
+	ALUout:	out std_logic_vector(15 downto 0)
+);
+end component;
+
+component obuf is
+port(	O_en: 		in std_logic;
+	obuf_in: 	in std_logic_vector(15 downto 0);
+	obuf_out: 	out std_logic_vector(15 downto 0)
+);
+end component;
+
+signal mux2rf, rf2alu1: std_logic_vector(15 downto 0); 
+signal rf2alu2, alu2memmux: std_logic_vector(15 downto 0);
+
+begin		
+
+  U1: smallmux port map(alu2memmux, mem_data, 
+			imm_data, RFs_dp, mux2rf);
+  U2: reg_file port map(clock_dp, rst_dp, RFwe_dp, 
+			RFr1e_dp, RFr2e_dp, 
+			RFwa_dp, RFr1a_dp, RFr2a_dp, 
+			mux2rf, rf2alu1, rf2alu2 );
+  U3: alu port map( rf2alu1, rf2alu2, jp_en, ALUs_dp, 
+		    ALUz_dp, alu2memmux);
+  U4: obuf port map(oe_dp, mem_data, bufout_dp);
+	
+  ALUout_dp <= alu2memmux;
+  RF1out_dp <= rf2alu1;
+	
+end struct;
+
+
+
+--------------------------------------------------------
+-- Simple Microprocessor Design
+--
+-- memory 256*16
+-- 8 bit address; 16 bit data
+-- memory.vhd
+--------------------------------------------------------
+
+library	ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;   
+use work.constant_lib.all;
+
+entity memory is
+port ( 	clock	: 	in std_logic;
+		rst		: 	in std_logic;
+		Mre		:	in std_logic;
+		Mwe		:	in std_logic;
+		address	:	in std_logic_vector(7 downto 0);
+		data_in	:	in std_logic_vector(15 downto 0);
+		data_out:	out std_logic_vector(15 downto 0)
+);
+end memory;
+
+architecture behv of memory is			
+
+  type ram_type is array (0 to 255) of 
+        		std_logic_vector(15 downto 0);
+  signal tmp_ram: ram_type;
+
+begin
+	
+
+							
+	write: process(clock, rst, Mre, address, data_in)
+	begin
+		if rst='1' then		
+			tmp_ram <= (------------------------------------------------------------ 
+						-- following instruction for debugging purpose
+						-- 0 => "0011001000101011",			   	-- R2 <= #2B
+						-- 1 => "0011001100001001",			   	-- R3 <= #09
+						-- 2 => "0001001100001010",			   	-- M[A] <= R3
+						-- 3 => "0000011000001000",			   	-- R6 <= M[8]
+						-- 4 => "0010001100100000",				-- M[R3] <= R2
+						-- 5 => "0100001100100000",				-- R3 <= R3 + R2
+						-- 6 => "0101001001100000",				-- R2 <= R2 -

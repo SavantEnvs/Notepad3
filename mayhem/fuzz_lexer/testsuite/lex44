@@ -1,0 +1,68 @@
+,<?xml version="1.0" encoding="UTF-8"?>
+<FreeFileSync XmlType="GLOBAL" XmlFormat="8">
+    <General>
+        <Language Name="English (U.S.)"/>
+        <FailSafeFileCopy Enabled="true"/>
+        <CopyLockedFiles Enabled="false"/>
+        <CopyFilePermissions Enabled="false"/>
+        <AutomaticRetry Count="0" Delay="5"/>
+        <FileTimeTolerance Seconds="2"/>
+        <FolderAccessTimeout Seconds="20"/>
+        <RunWithBackgroundPriority Enabled="false"/>
+        <LockDirectoriesDuringSync Enabled="true"/>
+        <VerifyCopiedFiles Enabled="false"/>
+        <LastSyncsLogSizeMax Bytes="100000"/>
+        <NotificationSound CompareFinished="" SyncFinished="gong.wav"/>
+        <ProgressDialog AutoClose="false"/>
+        <OptionalDialogs>
+            <ConfirmStartSync Show="true"/>
+            <ConfirmSaveConfig Show="true"/>
+            <ConfirmExternalCommandMassInvoke Show="true"/>
+            <WarnUnresolvedConflicts Show="true"/>
+            <WarnNotEnoughDiskSpace Show="true"/>
+            <WarnSignificantDifference Show="true"/>
+            <WarnRecycleBinNotAvailable Show="true"/>
+            <WarnInputFieldEmpty Show="true"/>
+            <WarnModificationTimeError Show="true"/>
+            <WarnDependentFolderPair Show="true"/>
+            <WarnDependentBaseFolders Show="true"/>
+            <WarnDirectoryLockFailed Show="true"/>
+            <WarnVersioningFolderPartOfSync Show="true"/>
+        </OptionalDialogs>
+    </General>
+    <Gui>
+        <MainDialog Width="1323" Height="882" PosX="282" PosY="31" Maximized="false">
+            <ManualCopyTo KeepRelativePaths="true" OverwriteIfExists="false">
+                <FolderHistory LastUsedPath="" MaxSize="15"/>
+            </ManualCopyTo>
+            <Search CaseSensitive="false"/>
+            <FolderPairsVisible Max="6"/>
+            <ConfigPanel ScrollPos="0" SyncOverdue="7" SortByColumn="Name" SortAscending="true">
+                <Columns>
+                    <Item Type="Name" Visible="true" Width="-65" Stretch="1"/>
+                    <Item Type="Last" Visible="true" Width="65" Stretch="0"/>
+                </Columns>
+                <Configurations MaxSize="100">
+                    <Item LastSync="1518469392">FFS:\Users\KeyPass\Documents\FFS_SyncSettings\2. On E Drive - Data of NP3.ffs_gui</Item>
+                    <Item LastSync="1518469345">FFS:\Users\KeyPass\Documents\FFS_SyncSettings\1. On D Drive - Data of NP3.ffs_gui</Item>
+                    <Item LastSync="0">FFS:\Users\KeyPass\AppData\Roaming\FreeFileSync\LastRun.ffs_gui</Item>
+                    <Item LastSync="1518364343">FFS:\Users\KeyPass\Documents\FFS_SyncSettings\7. On USB Disk B - All Data of NP3.ffs_gui</Item>
+                    <Item LastSync="1518365151">FFS:\Users\KeyPass\Documents\FFS_SyncSettings\6. On USB Disk A - All Data of NP3.ffs_gui</Item>
+                    <Item LastSync="1518363477">FFS:\Users\KeyPass\Documents\FFS_SyncSettings\5. On E Drive - All Data of USB Stick TDK3.0-64GB.ffs_gui</Item>
+                    <Item LastSync="1518363424">FFS:\Users\KeyPass\Documents\FFS_SyncSettings\4. On USB Data A - All Data of NP3.ffs_gui</Item>
+                    <Item LastSync="1518362859">FFS:\Users\KeyPass\Documents\FFS_SyncSettings\3. On USB Data P - Partial Data of NP3.ffs_gui</Item>
+                </Configurations>
+                <LastUsed>
+                    <Item>FFS:\Users\KeyPass\Documents\FFS_SyncSettings\2. On E Drive - Data of NP3.ffs_gui</Item>
+                </LastUsed>
+            </ConfigPanel>
+            <OverviewPanel ShowPercentage="true" SortByColumn="Bytes" SortAscending="false">
+                <Columns>
+                    <Item Type="Tree" Visible="true" Width="-132" Stretch="1"/>
+                    <Item Type="Count" Visible="true" Width="60" Stretch="0"/>
+                    <Item Type="Bytes" Visible="true" Width="60" Stretch="0"/>
+                </Columns>
+            </OverviewPanel>
+            <FilePanel ShowIcons="true" IconSize="Small" SashOffset="0" HistoryMaxSize="15">
+                <ColumnsLeft PathFormat="Relative">
+                    <Item 

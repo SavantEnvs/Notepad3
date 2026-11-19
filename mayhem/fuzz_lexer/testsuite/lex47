@@ -1,0 +1,118 @@
+/#cs ---------------------------------------------------
+
+ AutoIt Version: 3.3.14.5
+ Author:         Craig O'Brien
+
+ Script Function:
+  Configure the supplied Notepad3 executable how I like it
+  Designed for Notepad3 5.19.709+
+  Prerequisites:
+    - Cousine font
+  To Do:
+    - Cope with element repositioning caused by font scaling
+
+#ce ---------------------------------------------------
+
+autoitsetoption("MustDeclareVars", 1)   ; must declare variables
+autoitsetoption("WinTitleMatchMode", 2) ; window title: match anywhere
+autoitsetoption("MouseCoordMode", 0)    ; mouse coordinate mode: window
+autoitsetoption("PixelCoordMode", 0)    ; pixel coordinate mode: window
+
+If $CmdLine[0] <> 1 Then
+  MsgBox(0, "Error - Incorrect Arguments", "This script must be passed exactly one argument - the full path and filename to the Notepad3 executable to be configured. Check that this script has been passed an argument, and that if the argument includes spaces, that it is enclosed in quotes.", 10)
+  Exit(1)
+EndIf
+
+Dim $PathToNotepad3       = $CmdLine[1]
+Dim $WindowTitle          = "Untitled - Notepad3"
+Dim $WindowTitleShort     = " - Notepad3"
+Dim $DefaultWait          = 250
+Dim $ToolTip_X
+Dim $ToolTip_Y
+Dim $WindowLeftEdge       = (@DesktopWidth / 2) + 16
+Dim $WindowTopEdge        = 90
+Dim $WindowWidth          = (@DesktopWidth / 2) - 32
+Dim $WindowHeight         = @DesktopHeight - 146
+Dim $Reply
+Dim $Colour_MenuTickbox   = 0x333333
+; Dim $Colour_ExitButtonHighDPIOff = 0x2244AD
+Dim $Colour_ExitButtonHighDPIOn = 0x5B9FE2
+; Dim $Colour_HistoryButton = 
+Dim $CheckboxToggled
+
+; Launch Notepad3
+ToolTip("")
+ToolTip("Launching Notepad3...", 800, 0)
+ShellExecute($PathToNotepad3)
+Sleep(1800)
+ToolTip("")
+ToolTip("Waiting for Notepad3 window...", 800, 0)
+WinWait($WindowTitle, "")
+WinActivate($WindowTitle, "")
+
+; Position Window
+ToolTip("")
+ToolTip("Positioning application window...", 800, 0)
+WinWait($WindowTitle, "")
+WinActivate($WindowTitle, "")
+WinMove($WindowTitle, "", $WindowLeftEdge, $WindowTopEdge, $WindowWidth, $WindowHeight, 3)
+
+; Set ToolTip coordinates relative to application window
+$ToolTip_X = $WindowLeftEdge + 275
+$ToolTip_Y = $WindowTopEdge
+
+; This is a good place to do a coordinate check
+; CheckCoords("!p", 120, 130, 134, 144)
+; Exit
+
+; Enter some text so we can see what's going on
+ToolTip("")
+ToolTip("Entering some text...", $ToolTip_X, $ToolTip_Y)
+WinWait($WindowTitle, "")
+WinActivate($WindowTitle, "")
+Send("O0    1Il{ENTER}TMasgqlI|12345{+}6-7*8/9{^}0Oo'""$&?.,;:-(){{}{}}[]<>{ENTER}Illegal1 = O0{ENTER}")
+
+; FILE MENU
+
+; Default Encoding: UTF8
+ToolTip("")
+ToolTip("Setting default encoding to UTF-8...", $ToolTip_X, $ToolTip_Y)
+WinWait($WindowTitle, "")
+WinActivate($WindowTitle, "")
+Send("!f")
+Sleep($DefaultWait)
+Send("e")
+Sleep($DefaultWait)
+Send("{UP}")
+Sleep($DefaultWait)
+Send("{ENTER}")
+Sleep($DefaultWait)
+WinWait("Encoding", "Default Encoding")
+WinActivate("Encoding", "Default Encoding")
+ControlCommand("Encoding", "Default Encoding", "ComboBoxEx321", "SetCurrentSelection", 6)
+Sleep($DefaultWait)
+ControlClick("Encoding", "Default Encoding", "[CLASS:Button; TEXT:OK]") ; OK
+Sleep($DefaultWait)
+
+; Page Margins: 10mm everywhere
+ToolTip("")
+ToolTip("Setting page margins to 10mm...", $ToolTip_X, $ToolTip_Y)
+WinWait($WindowTitle, "")
+WinActivate($WindowTitle, "")
+Send("!f")
+Sleep($DefaultWait)
+Send("t")
+Sleep($DefaultWait)
+WinWait("Page Setup", "Margins (millimeters)")
+WinActivate("Page Setup", "Margins (millimeters)")
+While ControlGetText("Page Setup", "Margins (millimeters)", "[CLASS:Edit; INSTANCE:1]") <> "10"
+  ControlSetText("Page Setup", "Margins (millimeters)", "[CLASS:Edit; INSTANCE:1]", "10")
+  Sleep($DefaultWait)
+WEnd
+While ControlGetText("Page Setup", "Margins (millimeters)", "[CLASS:Edit; INSTANCE:2]") <> "10"
+  ControlSetText("Page Setup", "Margins (millimeters)", "[CLASS:Edit; INSTANCE:2]", "10")
+  Sleep($DefaultWait)
+WEnd
+While ControlGetText("Page Setup", "Margins (millimeters)", "[CLASS:Edit; INSTANCE:3]") <> "10"
+  ControlSetText("Page Setup", "Margins (millimeters)", "[CLASS:Edit; INSTANCE:3]", "10")
+  Sleep($DefaultWai

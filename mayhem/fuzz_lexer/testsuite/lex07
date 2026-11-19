@@ -1,0 +1,130 @@
+/******************************************************************************
+*                                                                             *
+* Notepad3                                                                    *
+*                                                                             *
+*******************************************************************************/
+
+#include "Helpers.h"
+
+#include <commctrl.h>
+#include <uxtheme.h>
+#include <shlobj.h>
+#include <shlwapi.h>
+#include <shellapi.h>
+#include <commdlg.h>
+#include <stdio.h>
+#include <string.h>
+//#include <pathcch.h>
+#include <time.h>
+
+
+/******************************************************************************
+*
+* Local and global Variables for Notepad3.c
+*
+*/
+CONSTANTS_T Constants;
+
+FLAGS_T     Flags;
+FLAGS_T     DefaultFlags;
+
+GLOBALS_T   Globals;
+SETTINGS_T  Settings;
+SETTINGS_T  Defaults;
+SETTINGS2_T Settings2;
+SETTINGS2_T Defaults2;
+
+FOCUSEDVIEW_T FocusedView;
+FILEWATCHING_T FileWatching;
+
+WININFO   s_WinInfo = INIT_WININFO;
+WININFO   s_DefWinInfo = INIT_WININFO;
+
+COLORREF  g_colorCustom[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+prefix_t  s_mxSBPrefix[STATUS_SECTOR_COUNT];
+prefix_t  s_mxSBPostfix[STATUS_SECTOR_COUNT];
+
+bool      s_iStatusbarVisible[STATUS_SECTOR_COUNT] = SBS_INIT_ZERO;
+int       s_iStatusbarWidthSpec[STATUS_SECTOR_COUNT] = SBS_INIT_ZERO;
+int       s_vSBSOrder[STATUS_SECTOR_COUNT] = SBS_INIT_MINUS;
+
+WCHAR     s_tchToolbarBitmap[MAX_PATH] = { L'\0' };
+WCHAR     s_tchToolbarBitmapHot[MAX_PATH] = { L'\0' };
+WCHAR     s_tchToolbarBitmapDisabled[MAX_PATH] = { L'\0' };
+
+bool      s_bEnableSaveSettings = true;
+int       s_iToolBarTheme = -1;
+bool      s_flagPosParam = false;
+int       s_flagWindowPos = 0;
+
+int       s_flagReuseWindow = 0;
+int       s_flagSingleFileInstance = 0;
+int       s_flagMultiFileArg = 0;
+int       s_flagShellUseSystemMRU = 0;
+int       s_flagPrintFileAndLeave = 0;
+
+
+// ------------------------------------
+
+static WCHAR     s_wchWndClass[16] = _W(SAPPNAME);
+
+static HWND      s_hwndEditFrame = NULL;
+static HWND      s_hwndNextCBChain = NULL;
+static HWND      s_hwndReBar = NULL;
+
+static WCHAR     s_wchTmpFilePath[MAX_PATH] = { L'\0' };
+
+static WCHAR     s_wchPrefixSelection[256] = { L'\0' };
+static WCHAR     s_wchAppendSelection[256] = { L'\0' };
+static WCHAR     s_wchPrefixLines[256] = { L'\0' };
+static WCHAR     s_wchAppendLines[256] = { L'\0' };
+
+static int       s_WinCurrentWidth = 0;
+
+#define FILE_LIST_SIZE 32
+static LPWSTR    s_lpFileList[FILE_LIST_SIZE] = { NULL };
+static int       s_cFileList = 0;
+static int       s_cchiFileList = 0;
+
+static WCHAR* const _s_RecentFiles = L"Recent Files";
+static WCHAR* const _s_RecentFind = L"Recent Find";
+static WCHAR* const _s_RecentReplace = L"Recent Replace";
+
+static WCHAR     s_tchLastSaveCopyDir[MAX_PATH] = { L'\0' };
+
+static bool      s_bRunningWatch = false;
+static bool      s_bFileReadOnly = false;
+static bool      s_bIsElevated = false;
+
+static int       s_iSortOptions = 0;
+static int       s_iAlignMode = 0;
+static bool      s_bIsAppThemed = true;
+static UINT      s_msgTaskbarCreated = 0;
+static bool      s_dwChangeNotifyTime = 0;
+static HANDLE    s_hChangeHandle = NULL;
+static WCHAR     s_wchTitleExcerpt[MIDSZ_BUFFER] = { L'\0' };
+static UINT      s_uidsAppTitle = IDS_MUI_APPTITLE;
+static DWORD     s_dwLastCopyTime = 0;
+static bool      s_bLastCopyFromMe = false;
+static bool      s_bIndicMultiEdit = false;
+
+static int       s_iInitialLine;
+static int       s_iInitialColumn;
+static int       s_iInitialLexer;
+
+static int       s_cyReBar;
+static int       s_cyReBarFrame;
+static int       s_cxEditFrame;
+static int       s_cyEditFrame;
+
+// for tiny expression calculation
+static double    s_dExpression = 0.0;
+static int       s_iExprError = -1;
+
+static WIN32_FIND_DATA s_fdCurFile;
+
+static HMODULE s_hRichEdit = INVALID_HANDLE_VALUE;
+
+static int const INISECTIONBUFCNT = 32; // .ini file load buffer in KB
+

@@ -1,0 +1,128 @@
+7/* 
+ * Notepad3 format decrypter
+ * 
+ * 
+ * This standalone program decrypts files that were encrypted in Notepad3's simple format.
+ * 
+ * The intent of this program is to provide an independent, robust implementation for handling the file format,
+ * in case Notepad3 (or that author's own small standalone decrypter) is inaccessible or has errors.
+ * 
+ * Prerequisites: compiled class  (javac DecryptNotepad3.java => DecryptNotepad3.class)
+ * 
+ * Usage: java DecryptNotepad3 InputFile [-m] Passphrase
+ * Options:
+ *     -m: Use master key (only applicable for files with master key)
+ * Examples:
+ *     java DecryptNotepad3 myencryptedfile.bin password123
+ *     java DecryptNotepad3 myencryptedfile.bin -m masterPass456
+ *     (Prints to standard output)
+ * 
+ * 
+ * Copyright (c) 2017 Project Nayuki
+ * All rights reserved. Contact Nayuki for licensing.
+ * https://www.nayuki.io/page/notepadcrypt-format-decryptor-java
+ * Old: http://nayuki.eigenstate.org/page/notepadcrypt-format-decryptor-java
+ * 
+ * Adaption to Notepad3 by RaiKoHoff
+ *
+ * NotepadCrypt resources:
+ * - http://www.andromeda.com/people/ddyer/notepad/NotepadCrypt.html
+ * - http://www.andromeda.com/people/ddyer/notepad/NotepadCrypt-technotes.html
+ *
+ * Notepad3 resources:
+ * - https://rizonesoft.com/downloads/notepad3
+ * - https://rizonesoft.com/documents/notepad3
+ * - https://github.com/rizonesoft/Notepad3
+ */
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import static java.lang.Integer.rotateRight;
+
+public final class DecryptNotepad3 {
+	
+	/* Main functions */
+	
+	public static void main(String[] args) throws IOException {
+		// Get arguments
+		File inputFile;
+		String passphrase;
+		boolean useMasterKey;
+		if (args.length == 2) {
+			useMasterKey = false;
+			passphrase = args[1];
+		} else if (args.length == 3 && args[1].equals("-m")) {
+			useMasterKey = true;
+			passphrase = args[2];
+		} else {
+			System.err.println("Usage: java DecryptNotepad3 InputFile [-m] Passphrase");
+			System.err.println("    -m: Use master key (only applicable for files with master key)");
+			System.exit(1);
+			return;
+		}
+		inputFile = new File(args[0]);
+		
+		// Read file
+		byte[] data = new byte[(int)inputFile.length()];
+		InputStream in = new FileInputStream(inputFile);
+		try {
+			if (data.length > 0 && in.read(data) < data.length)
+				throw new IOException("Unexpected file size");
+			if (in.read(data) != -1)
+				throw new IOException("Unexpected file size");
+		} finally {
+			in.close();
+		}
+		
+		// Decrypt and write
+		byte[] plaintext;
+		try {
+			plaintext = decryptFileData(data, passphrase.getBytes("US-ASCII"), useMasterKey);
+		} catch (IllegalArgumentException e) {
+			System.err.println("Error: " + e.getMessage());
+			System.exit(1);
+			return;
+		}
+		System.out.write(plaintext);
+	}
+	
+	
+	static byte[] decryptFileData(byte[] fileData, byte[] passphrase, boolean useMasterKey) {
+		if (fileData.length == 0)
+			return fileData;  // Notepad3 produces an empty file when trying to encrypt an empty text file
+		
+		// Parse file format
+		boolean hasMasterKey;
+		if (toInt32(fileData, 0) != 0x04030201)
+			throw new IllegalArgumentException("Unsupported file format");
+		switch (toInt32(fileData, 4)) {
+			case 0x01000000:
+				hasMasterKey = false;
+				break;
+			case 0x02000000:
+				hasMasterKey = true;
+				break;
+			default:
+				throw new IllegalArgumentException("Unsupported encryption format");
+		}
+		
+		// Decrypt text
+		byte[] cipherKey = getSha256Hash(passphrase);
+		byte[] initVec = Arrays.copyOfRange(fileData, 8, 24);
+		byte[] ciphertext = Arrays.copyOfRange(fileData, hasMasterKey ? 72 : 24, fileData.length);
+		if (useMasterKey) {
+			if (!hasMasterKey)
+				throw new IllegalArgumentException("Master key mode requested on file data with no master key");
+			byte[] iv = Arrays.copyOfRange(fileData, 24, 40);
+			byte[] fileKey = Arrays.copyOfRange(fileData, 40, 72);
+			Aes.decryptCbcMode(fileKey, cipherKey, iv);
+			cipherKey = fileKey;
+		}
+		return decryptWithPadding(ciphertext, cipherKey, initVec);
+	}
+	
+	
+	/* Utility fu

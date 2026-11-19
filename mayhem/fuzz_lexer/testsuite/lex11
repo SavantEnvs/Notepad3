@@ -1,0 +1,88 @@
+﻿//
+// Copyright (C) Microsoft. All rights reserved.
+//
+/// <disable>JS2085.EnableStrictMode</disable>
+"use strict";
+var CloudExperienceHost;
+(function (CloudExperienceHost) {
+    class Environment {
+        static getTarget() {
+            var retValue;
+            var regValue = CloudExperienceHostAPI.Environment.target;
+            switch (regValue) {
+                case 0:
+                    retValue = CloudExperienceHost.TargetEnvironment.PROD;
+                    break;
+                case 1:
+                    retValue = CloudExperienceHost.TargetEnvironment.INT;
+                    break;
+                default:
+                    retValue = CloudExperienceHost.TargetEnvironment.PROD;
+                    break;
+            }
+            return retValue;
+        }
+        static hasInternetAccess() {
+            let hasInternetAccess = false;
+            let connectionProfile = Windows.Networking.Connectivity.NetworkInformation.getInternetConnectionProfile();
+            if (connectionProfile && (connectionProfile.getNetworkConnectivityLevel() === Windows.Networking.Connectivity.NetworkConnectivityLevel.internetAccess)) {
+                if (connectionProfile.isWwanConnectionProfile && Environment._isOobeScenario() && !Environment.hasDataMartBeenChecked) {
+                    Environment.wwanConnectionIsDataMartSim = Environment.isDataMartSim();
+                    Environment.hasDataMartBeenChecked = true;
+                }
+                hasInternetAccess = !Environment.wwanConnectionIsDataMartSim;
+            }
+            return hasInternetAccess;
+        }
+        static hasNetworkConnectivity() {
+            let hasNetworkConnectivity = false;
+            let ConnectionProfiles = Windows.Networking.Connectivity.NetworkInformation.getConnectionProfiles();
+            if (ConnectionProfiles.length !== 0) {
+                for (var i = 0; i < ConnectionProfiles.length; i++) {
+                    if (ConnectionProfiles[i].getNetworkConnectivityLevel() > Windows.Networking.Connectivity.NetworkConnectivityLevel.none) {
+                        hasNetworkConnectivity = true;
+                        break;
+                    }
+                }
+            }
+            return hasNetworkConnectivity;
+        }
+        static isDataMartSim() {
+            let isDmSim = false;
+            try {
+                let modem = Windows.Networking.NetworkOperators.MobileBroadbandModem.getDefault();
+                if (modem) {
+                    let iccid = modem.deviceInformation.simIccId;
+                    isDmSim = CloudExperienceHostAPI.UtilStaticsCore.isDataMartSim(iccid);
+                }
+            }
+            catch (exception) {
+            }
+            return isDmSim;
+        }
+        static getLicensingPoliciesAsync(namesJson) {
+            return new WinJS.Promise(function (completeDispatch, errorDispatch, progressDispatch) {
+                let names = JSON.parse(namesJson);
+                let results = new Array(names.length);
+                for (let i = 0; i < names.length; i++) {
+                    results[i] = CloudExperienceHostAPI.UtilStaticsCore.getLicensingPolicyValue(names[i]);
+                }
+                completeDispatch(JSON.stringify(results));
+            });
+        }
+        static isNetworkRequiredAsync() {
+            return new WinJS.Promise(function (completeDispatch, errorDispatch, progressDispatch) {
+                let result = CloudExperienceHostAPI.UtilStaticsCore.isNetworkRequired;
+                completeDispatch(result);
+            });
+        }
+        static GetWiFiHostedApplicationArguments() {
+            let propertySet = new Windows.Foundation.Collections.PropertySet();
+            propertySet.insert("IsNetworkRequired", CloudExperienceHostAPI.UtilStaticsCore.isNetworkRequired);
+            return propertySet;
+        }
+        static GetWiFiHostedApplicationArgumentsA() {
+            let propertySet = Environment.GetWiFiHostedApplicationArguments();
+            propertySet.insert("NetworkUXMode", "Windows.Core");
+            return propertySet;
+       

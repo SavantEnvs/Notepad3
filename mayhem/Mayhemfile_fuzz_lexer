@@ -1,0 +1,10 @@
+project: savantenvs/Notepad3
+target: fuzz_lexer
+testsuite:
+  - https://$MAYHEM_DOMAIN/$MAYHEM_PROJECT/$MAYHEM_TARGET/testsuite.tar
+  - file://mayhem/fuzz_lexer/testsuite
+
+cmds:
+  - cmd: /mayhem/fuzz_lexer
+    libfuzzer: true
+    timeout: 5

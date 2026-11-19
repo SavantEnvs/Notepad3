@@ -1,0 +1,102 @@
+&# Define SciTE settings for HTML files.
+
+# vxml added by lseredi
+
+file.patterns.web=*.html;*.htm;*.asp;*.shtml;*.htd;*.jsp;*.xhtml
+file.patterns.php=*.php3;*.phtml;*.php
+file.patterns.html=$(file.patterns.web);$(file.patterns.php);*.htt;*.cfm;*.tpl;*.dtd;*.hta
+file.patterns.vxml=*.vxml
+file.patterns.xml=*.xml;*.xsl;*.svg;*.xul;*.xsd;*.dtd;*.xslt;*.axl;*.xrc;*.rdf
+file.patterns.docbook=*.docbook
+
+# *.mak also used for makefiles so don't include by default.
+#file.patterns.mako=*.mak;*.mako
+file.patterns.mako=*.mako
+
+*source.patterns.cgi=*.cgi;
+*source.patterns.html=$(file.patterns.web);
+*source.patterns.xml=$(file.patterns.xml);
+
+lexer.$(file.patterns.html)=hypertext
+lexer.$(file.patterns.vxml)=hypertext
+lexer.$(file.patterns.xml)=xml
+lexer.$(file.patterns.docbook)=hypertext
+lexer.$(file.patterns.mako)=hypertext
+
+filter.web=Web (html htm asp shtml css xml docbook jsp)|$(file.patterns.web);*.css;*.xml;*.docbook|
+filter.php=PHP (php php3 phtml)|$(file.patterns.php)|
+
+*filter.web=$(filter.web)
+*filter.php=$(filter.php)
+
+*language.html=H&ypertext|html|$(keyHTML)|
+*language.php=P&HP|php||
+*language.xml=&XML|xml|$(keyXML)|
+
+fold.html=1
+#fold.html.preprocessor=0
+#fold.hypertext.comment=1
+#fold.hypertext.heredoc=1
+
+#Default Language=1 for JS, 2 for VBS.
+#asp.default.language=2
+#html.tags.case.sensitive=1
+
+#lexer.html.django=1
+#lexer.html.mako=1
+
+#xml.auto.close.tags=1
+#lexer.xml.allow.scripts=0
+
+# All hypertext elements and attributes must be listed in lower case
+hypertext.elements=\
+a abbr acronym address applet area b base basefont \
+bdo bgsound big blink blockquote body br button caption center \
+cite code col colgroup dd del dfn dir div dl dt em \
+fieldset font form frame frameset h1 h2 h3 h4 h5 h6 \
+head hr html i iframe img input ins isindex kbd label \
+legend li link listing map marquee menu menuitem meta multicol nobr noembed noframes noscript \
+object ol optgroup option p param plaintext pre q s samp \
+script select small spacer span strike strong style sub sup \
+table tbody td textarea tfoot th thead title tr tt u ul \
+var xml xmlns xmp
+
+hypertext.attributes=\
+abbr accept-charset accept accesskey action align alink \
+allowtransparency alt archive axis background bgcolor border bordercolor bottommargin \
+cellpadding cellspacing char charoff charset checked cite \
+class classid clear codebase codetype color cols colspan \
+compact content coords \
+data datafld dataformatas datapagesize datasrc datetime \
+declare defer dir disabled enctype event \
+face for frame frameborder framespacing \
+headers height href hreflang hspace http-equiv \
+id ismap label lang language leftmargin link longdesc lowsrc \
+marginwidth marginheight maxlength media method methods multiple \
+name nohref noresize noshade nowrap \
+object onblur onchange onclick ondblclick onfocus \
+onkeydown onkeypress onkeyup onload onmousedown \
+onmousemove onmouseover onmouseout onmouseup \
+onreset onselect onsubmit onunload \
+profile prompt readonly rel rev rightmargin rows rowspan rules \
+scheme scope scrolling selected shape size span src standby start style \
+summary tabindex target text title topmargin type usemap urn \
+valign value valuetype version vlink vspace width \
+text password checkbox radio submit reset \
+file hidden image \
+^data-
+
+# As defined in "HTML5 differences from HTML4" Working Draft
+# http://www.w3.org/TR/html5-diff/
+html5.elements=\
+address article aside audio base bdi canvas command details datalist dialog embed \
+figure figcaption footer header hgroup keygen main mark menu meter nav output \
+picture progress ruby rb rt rtc rp section source template track time video wbr
+
+html5.attributes=\
+allowfullscreen allowpaymentrequest async autocomplete autofocus autoplay \
+controls contenteditable contextmenu crossorigin default dirname download draggable \
+form formaction formenctype formmethod formnovalidate formtarget high kind \
+list low loop manifest max muted min minlength nonce novalidate open optimum \
+onabort onaddtrack onafterprint onauxclick onbeforeprint onbeforeunload \
+oncancel oncanplay oncanplaythrough onclose oncopy oncuechange oncut

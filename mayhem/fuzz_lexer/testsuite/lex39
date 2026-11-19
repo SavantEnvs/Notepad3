@@ -1,0 +1,189 @@
+'#! /usr/bin/env ruby
+# -*- coding: us-ascii -*-
+
+$testnum=0
+$ntest=0
+$failed = 0
+class Progress
+  def initialize
+    @color = nil
+    @tty = nil
+    @quiet = nil
+    @verbose = nil
+    ARGV.each do |arg|
+      case arg
+      when /\A--color(?:=(?:always|(auto)|(never)|(.*)))?\z/
+        warn "unknown --color argument: #$3" if $3
+        @color = $1 ? nil : !$2
+      when /\A--tty(=(?:yes|(no)|(.*)))?\z/
+        warn "unknown --tty argument: #$3" if $3
+        @tty = !$1 || !$2
+        true
+      when /\A-(q|-quiet)\z/
+        @quiet = true
+      when /\A-(v|-verbose)\z/
+        @verbose = true
+      end
+    end
+    @tty = STDERR.tty? && !STDOUT.tty? && /dumb/ !~ ENV["TERM"] if @tty.nil?
+    @eol = @tty && !@verbose ? "\r\e[K\r" : "\n"
+    case @color
+    when nil
+      @color = @tty
+    end
+    if @color
+      # dircolors-like style
+      colors = (colors = ENV['TEST_COLORS']) ? Hash[colors.scan(/(\w+)=([^:\n]*)/)] : {}
+      begin
+        File.read(File.join(__dir__, "../tool/colors")).scan(/(\w+)=([^:\n]*)/) do |n, c|
+          colors[n] ||= c
+        end
+      rescue
+      end
+      @passed = "\e[;#{colors["pass"] || "32"}m"
+      @failed = "\e[;#{colors["fail"] || "31"}m"
+      @reset = "\e[m"
+    else
+      @passed = @failed = @reset = ""
+    end
+    extend(Rotator) if @tty
+  end
+
+  def passed_string
+    "."
+  end
+  def failed_string
+    "#{@failed}F#{@reset}"
+  end
+  def init_string
+  end
+  def finish_string
+    if @quiet
+      @eol
+    else
+      "#{@passed}#{@ok ? 'OK' : ''} #{$testnum}#{@reset}#{@eol}"
+    end
+  end
+  def pass
+    STDERR.print passed_string
+  end
+  def fail
+    @ok = false
+    STDERR.print failed_string
+  end
+  def init
+    @ok = true
+    STDERR.print init_string
+  end
+  def finish
+    STDERR.print finish_string
+  end
+
+  module Rotator
+    ROTATOR = %w[- \\ | /]
+    BS = "\b" * ROTATOR[0].size
+    def passed_string
+      "#{BS}#{ROTATOR[(@count += 1) % ROTATOR.size]}"
+    end
+    def failed_string
+      "#{BS}#{super}#{ROTATOR[@count % ROTATOR.size]}"
+    end
+    def init_string
+      @count = 0
+      " "
+    end
+    def finish_string
+      s = "#{BS}#{' ' * BS.size}#{BS}#{super}"
+      s.gsub!(/\n/, "\r\e[2K\r") if @quiet
+      s
+    end
+  end
+end
+PROGRESS = Progress.new
+
+def test_check(what)
+  unless $ntest.zero?
+    PROGRESS.finish
+  end
+  STDERR.print "#{$0}:#{what} "
+  PROGRESS.init
+  $what = what
+  $testnum = 0
+end
+
+def test_ok(cond,n=1)
+  $testnum+=1
+  $ntest+=1
+  where = (st = caller(n)) ? st[0] : "caller error! (n=#{n}, trace=#{caller(0).join(', ')}"
+  if cond
+    PROGRESS.pass
+    printf "ok %d (%s)\n", $testnum, where
+  else
+    PROGRESS.fail
+    printf "not ok %s %d -- %s\n", $what, $testnum, where
+    $failed+=1
+  end
+  STDOUT.flush
+  STDERR.flush
+end
+
+# make sure conditional operators work
+
+test_check "assignment"
+
+a=[]; a[0] ||= "bar";
+test_ok(a[0] == "bar")
+h={}; h["foo"] ||= "bar";
+test_ok(h["foo"] == "bar")
+
+aa = 5
+aa ||= 25
+test_ok(aa == 5)
+bb ||= 25
+test_ok(bb == 25)
+cc &&=33
+test_ok(cc == nil)
+cc = 5
+cc &&=44
+test_ok(cc == 44)
+
+a = nil; test_ok(a == nil)
+a = 1; test_ok(a == 1)
+a = []; test_ok(a == [])
+a = [1]; test_ok(a == [1])
+a = [nil]; test_ok(a == [nil])
+a = [[]]; test_ok(a == [[]])
+a = [1,2]; test_ok(a == [1,2])
+a = [*[]]; test_ok(a == [])
+a = [*[1]]; test_ok(a == [1])
+a = [*[1,2]]; test_ok(a == [1,2])
+
+a = *[]; test_ok(a == [])
+a = *[1]; test_ok(a == [1])
+a = *[nil]; test_ok(a == [nil])
+a = *[[]]; test_ok(a == [[]])
+a = *[1,2]; test_ok(a == [1,2])
+a = *[*[]]; test_ok(a == [])
+a = *[*[1]]; test_ok(a == [1])
+a = *[*[1,2]]; test_ok(a == [1,2])
+
+a, = nil; test_ok(a == nil)
+a, = 1; test_ok(a == 1)
+a, = []; test_ok(a == nil)
+a, = [1]; test_ok(a == 1)
+a, = [nil]; test_ok(a == nil)
+a, = [[]]; test_ok(a == [])
+a, = 1,2; test_ok(a == 1)
+a, = [1,2]; test_ok(a == 1)
+a, = [*[]]; test_ok(a == nil)
+a, = [*[1]]; test_ok(a == 1)
+a, = *[1,2]; test_ok(a == 1)
+a, = [*[1,2]]; test_ok(a == 1)
+
+a, = *[]; test_ok(a == nil)
+a, = *[1]; test_ok(a == 1)
+a, = *[nil]; test_ok(a == nil)
+a, = *[[]]; test_ok(a == [])
+a, = *[1,2]; test_ok(a == 1)
+a, = *[*[]]; test_ok(a == nil)
+a, = *[*[1]]; test_ok(a =
